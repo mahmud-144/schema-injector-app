@@ -417,6 +417,46 @@ export default function Index() {
   const loaderData = useLoaderData();
   const [searchParams] = useSearchParams();
   const [groupName, setGroupName] = useState("");
+
+  function parseSchemasForState(group) {
+    if (!group.schemas || group.schemas.length === 0) return [];
+    return group.schemas.map((s) => {
+      const typeKey = s.type.toLowerCase();
+      let data = {};
+      try {
+        if (s.formData) {
+          data = JSON.parse(s.formData);
+        } else if (s.jsonContent) {
+          data = { json: s.jsonContent };
+        }
+      } catch {
+        data = {};
+      }
+
+      if (typeKey === "faq_page" && s.faqRows) {
+        try {
+          data.items = JSON.parse(s.faqRows);
+        } catch {
+          data.items = [{ question: "", answer: "" }];
+        }
+      }
+      if (typeKey === "breadcrumb_list" && s.breadcrumbs) {
+        try {
+          data.items = JSON.parse(s.breadcrumbs);
+        } catch {
+          data.items = [{ name: "", url: "" }];
+        }
+      }
+
+      return {
+        id: s.id,
+        type: s.type,
+        label: s.name,
+        mode: s.mode || "form",
+        data,
+      };
+    });
+  }
   const [activeGroup, setActiveGroup] = useState(null);
   const [injectTarget, setInjectTarget] = useState("liquid_snippet");
   const [savedTarget, setSavedTarget] = useState(null);
@@ -461,43 +501,7 @@ export default function Index() {
       }
 
       if (group.schemas && group.schemas.length > 0) {
-        const parsedSchemas = group.schemas.map((s) => {
-          const typeKey = s.type.toLowerCase();
-          let data = {};
-          try {
-            if (s.formData) {
-              data = JSON.parse(s.formData);
-            } else if (s.jsonContent) {
-              data = { json: s.jsonContent };
-            }
-          } catch {
-            data = {};
-          }
-
-          if (typeKey === "faq_page" && s.faqRows) {
-            try {
-              data.items = JSON.parse(s.faqRows);
-            } catch {
-              data.items = [{ question: "", answer: "" }];
-            }
-          }
-          if (typeKey === "breadcrumb_list" && s.breadcrumbs) {
-            try {
-              data.items = JSON.parse(s.breadcrumbs);
-            } catch {
-              data.items = [{ name: "", url: "" }];
-            }
-          }
-
-          return {
-            id: s.id,
-            type: s.type,
-            label: s.name,
-            mode: s.mode || "form",
-            data,
-          };
-        });
-        setAddedSchemas(parsedSchemas);
+        setAddedSchemas(parseSchemasForState(group));
       } else {
         setAddedSchemas([]);
       }
@@ -534,6 +538,7 @@ export default function Index() {
   useEffect(() => {
     if (fetcher.data?.group) {
       setActiveGroup(fetcher.data.group);
+      setAddedSchemas(parseSchemasForState(fetcher.data.group));
       setNotice(fetcher.data.message || "Group loaded");
       shopify.toast.show(fetcher.data.message || "Group loaded");
       setTimeout(() => setNotice(""), 3000);
