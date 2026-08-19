@@ -1,0 +1,10 @@
+{
+  "en": {
+    "blocks": {
+      "schema_injector": {
+        "name": "Schema Injector",
+        "description": "Injects JSON-LD schema markup into your storefront."
+      }
+    }
+  }
+}

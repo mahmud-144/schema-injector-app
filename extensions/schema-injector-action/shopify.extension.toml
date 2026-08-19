@@ -1,0 +1,21 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "Add Schema with Schema Injector"
+handle = "add-schema-with-schema-injector-product"
+uid = "0bdc9347-efcd-435f-8631-2e545a773678"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/ProductAction.jsx"
+target = "admin.product-details.action.render"
+
+[[extensions]]
+name = "Add Schema with Schema Injector"
+handle = "add-schema-with-schema-injector-product-index"
+uid = "2c3ddd57-e6ef-45b2-84e7-3911f4ce8ad5"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/ProductIndexAction.jsx"
+target = "admin.product-index.action.render"

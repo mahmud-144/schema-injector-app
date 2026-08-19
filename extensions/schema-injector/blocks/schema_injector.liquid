@@ -1,0 +1,106 @@
+﻿{% comment %}
+  Schema Injector - Simple Metafield Injection
+  Reads JSON-LD directly from metafields:
+  - Product level: product.metafields.schema_injector.json
+  - Shop level: shop.metafields.schema_injector.json
+{% endcomment %}
+{% if request.page_type == 'product' and product.metafields.schema_injector.json != blank %}
+  <script type="application/ld+json">
+    {{ product.metafields.schema_injector.json }}
+  </script>
+{% elsif shop.metafields.schema_injector.json != blank %}
+  <script type="application/ld+json">
+    {{ shop.metafields.schema_injector.json }}
+  </script>
+{% endif %}
+
+{% comment %}
+  Schema Injector - App Embed Block
+  This block is automatically injected into the theme <head>.
+  It outputs JSON-LD schema markup for active schema groups.
+{% endcomment %}
+
+{% assign schema_groups = shop.metafields.schema_injector %}
+{% if schema_groups %}
+  {% for group in schema_groups %}
+    {% assign group_key = group.key %}
+    {% assign group_data = group.value %}
+
+    {% if group_data %}
+      {% assign schema_payload = group_data %}
+      {% if schema_payload.type == 'json' %}
+        {% assign schema_payload = schema_payload.value %}
+      {% endif %}
+
+      {% if schema_payload %}
+        {% assign g_target_type = schema_payload.targetType %}
+        {% assign g_target_page_ids = schema_payload.targetPageIds | split: ',' %}
+        {% assign g_target_post_ids = schema_payload.targetPostIds | split: ',' %}
+        {% assign matched = false %}
+
+        {% case g_target_type %}
+          {% when 'liquid_snippet' or 'all_pages' %}
+            {% assign matched = true %}
+
+          {% when 'all_products' %}
+            {% if template == 'product' %}
+              {% assign matched = true %}
+            {% endif %}
+
+          {% when 'all_blogs' %}
+            {% if template == 'article' or template == 'blog' %}
+              {% assign matched = true %}
+            {% endif %}
+
+          {% when 'specific_pages' %}
+            {% if template == 'page' %}
+              {% for pid in g_target_page_ids %}
+                {% if pid == page.id %}
+                  {% assign matched = true %}
+                  {% break %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+
+          {% when 'specific_products' %}
+            {% if template == 'product' %}
+              {% for pid in g_target_page_ids %}
+                {% if pid == product.id %}
+                  {% assign matched = true %}
+                  {% break %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+
+          {% when 'specific_blogs' %}
+            {% if template == 'article' or template == 'blog' %}
+              {% for pid in g_target_post_ids %}
+                {% if pid == article.id or pid == blog.id %}
+                  {% assign matched = true %}
+                  {% break %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+        {% endcase %}
+
+        {% if matched %}
+          {% for schema_item in schema_payload.schemas %}
+            {% if schema_item.json != blank %}
+              <script type="application/ld+json">
+                {{ schema_item.json }}
+              </script>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "Schema Injector",
+  "target": "head",
+  "settings": []
+}
+{% endschema %}
